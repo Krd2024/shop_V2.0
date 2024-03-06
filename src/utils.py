@@ -89,21 +89,23 @@ def product(res, call):
     )
 
 
-def add_basket(uid):
+def add_basket(uid, prod_id, action):
     with sqlite3.connect("shop_2.db") as connection:
         cursor = connection.cursor()
         cursor.execute(
             """
-                    INSERT INTO  test2 (name, amount)
-                    VALUES (name, qty,user_id)
-                    ON CONFLICT(name) DO UPDATE SET
-                        amount = CASE
-                                    WHEN amount = 0 THEN 1
-                                    ELSE amount - 1
+                    INSERT INTO  Basket (product_id, qty, user_id )
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(product_id) DO UPDATE SET
+                        qty = CASE
+                                    WHEN qty = 0 THEN 1
+                                    ELSE qty + 1
                                 END;
-
-                    DELETE FROM  test2 WHERE amount = 0;
                     """,
-            (uid,),
+            (
+                prod_id,
+                1,
+                uid,
+            ),
         )
     connection.commit()

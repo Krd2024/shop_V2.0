@@ -28,7 +28,7 @@ def handle_answer1(call):
 @bot.callback_query_handler(
     func=lambda call: call.data.startswith(("bac_k", "prod_id"))
 )
-def handle_answer1(call):
+def handle_answer2(call):
     """получение,вывод,добавление в корзину конкретного товара"""
 
     if call.data.startswith("prod_id"):
@@ -52,8 +52,8 @@ def handle_answer1(call):
     if info_basket == []:
         kol_vo = 0
 
-    key1 = types.InlineKeyboardButton(f"➕", callback_data=f"pls")
-    key2 = types.InlineKeyboardButton(f"➖", callback_data=f"min")
+    key1 = types.InlineKeyboardButton(f"➕", callback_data=f"pls{res_info[0][0]}")
+    key2 = types.InlineKeyboardButton(f"➖", callback_data=f"min{res_info[0][0]}")
 
     key3 = types.InlineKeyboardButton(
         f"Выбрано {kol_vo}({res_info[0][4] * kol_vo}р) ", callback_data=f" "
@@ -72,6 +72,14 @@ def handle_answer1(call):
         text=f"{res_info[0][1]}\nЦена: {res_info[0][4]} ",
         reply_markup=keyboard,
     )
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith(("pls", "min")))
+def handle_(call):
+    uid = call.from_user.id
+    prod_id = call.data[3:]
+    action = call.data[:3]
+    add_basket(uid, prod_id, action)
 
 
 bot.infinity_polling()
