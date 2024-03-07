@@ -60,22 +60,30 @@ def specific_product(id_tovar):
         return res_info
 
 
-def basket(uid, prod_id):
+def basket(uid, prod_id=None):
     with sqlite3.connect("shop_2.db") as connection:
         cursor = connection.cursor()
-        cursor.execute(
-            """ SELECT * FROM Basket WHERE user_id =? AND product_id=?""",
-            (
-                uid,
-                prod_id,
-            ),
-        )
-        info_basket = cursor.fetchall()
-        return info_basket
+        if prod_id is not None:
+            cursor.execute(
+                """ SELECT * FROM Basket WHERE user_id =? AND product_id=?""",
+                (
+                    uid,
+                    prod_id,
+                ),
+            )
+            info_basket = cursor.fetchall()
+            return info_basket
+        else:
+            cursor.execute(
+                """ SELECT * FROM Basket WHERE user_id =? """,
+                (uid,),
+            )
+            info_basket = cursor.fetchall()
+            return info_basket
 
 
 def product(res, call):
-    uid = call.from_user.id
+
     chat_id = call.message.chat.id
     message_id = call.message.message_id
     keyboard = types.InlineKeyboardMarkup()
@@ -96,10 +104,12 @@ def product(res, call):
 
 
 def add_basket(uid, prod_id, action):
+
     with sqlite3.connect("shop_2.db") as connection:
         cursor = connection.cursor()
-        cursor.execute(
-            """
+        if action == "pls":
+            cursor.execute(
+                """
                     INSERT INTO  Basket (product_id, qty, user_id )
                     VALUES (?, ?, ?)
                     ON CONFLICT(product_id) DO UPDATE SET
@@ -108,18 +118,34 @@ def add_basket(uid, prod_id, action):
                                     ELSE qty + 1
                                 END;
                     """,
-            (
-                prod_id,
-                1,
-                uid,
-            ),
-        )
+                (
+                    prod_id,
+                    1,
+                    uid,
+                ),
+            )
+        elif action == "min":
+            cursor.execute(
+                """
+                    INSERT INTO  Basket (product_id, qty, user_id )
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(product_id) DO UPDATE SET
+                        qty = CASE
+                                    WHEN qty = 0 THEN 0
+                                    ELSE qty - 1
+                                END;
+                    """,
+                (
+                    prod_id,
+                    1,
+                    uid,
+                ),
+            )
 
     connection.commit()
 
 
 def choice_product(call, prod_id, res_info=None):
-    print(call)
     uid = call.from_user.id
     chat_id = call.message.chat.id
     message_id = call.message.message_id
@@ -147,10 +173,14 @@ def choice_product(call, prod_id, res_info=None):
     add = [key2, key1]
     add1 = [key3]
     keyboard = types.InlineKeyboardMarkup([add, add1, [key_back_2]])
-
-    bot.edit_message_text(
-        chat_id=chat_id,
-        message_id=message_id,
-        text=f"{res_info[0][1]}\nЦена: {res_info[0][4]} ",
-        reply_markup=keyboard,
-    )
+    try:
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=f"{res_info[0][1]}\nЦена: {res_info[0][4]} ",
+            reply_markup=keyboard,
+        )
+    except Exception as e:
+        print(e)
+    finally:
+        ...
