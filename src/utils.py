@@ -102,51 +102,56 @@ def product(res, call):
     bot.edit_message_text(
         chat_id=chat_id,
         message_id=message_id,
-        text="Выберите товар: ⬇️⬇️⬇️",
+        text="Выберите товар: ⬇️⬇️⬇️⬇️⬇️⬇️⬇️",
         reply_markup=keyboard,
     )
 
 
-def add_basket(uid, prod_id, action):
+# def add_basket(uid, prod_id, action):
+#     print(uid, prod_id, action, "<<< test 2")
 
-    with sqlite3.connect("shop_2.db") as connection:
-        cursor = connection.cursor()
-        if action == "pls":
-            cursor.execute(
-                """
-                    INSERT INTO  Basket (product_id, qty, user_id )
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(product_id) DO UPDATE SET
-                        qty = CASE
-                                    WHEN qty = 0 THEN 1
-                                    ELSE qty + 1
-                                END;
-                    """,
-                (
-                    prod_id,
-                    1,
-                    uid,
-                ),
-            )
-        elif action == "min":
-            cursor.execute(
-                """
-                    INSERT INTO  Basket (product_id, qty, user_id )
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(product_id) DO UPDATE SET
-                        qty = CASE
-                                    WHEN qty = 0 THEN 0
-                                    ELSE qty - 1
-                                END;
-                    """,
-                (
-                    prod_id,
-                    1,
-                    uid,
-                ),
-            )
+#     with sqlite3.connect("shop_2.db") as connection:
+#         cursor = connection.cursor()
+#         if action == "pls":
+#             cursor.execute(
+#                 """
+#                     INSERT INTO  Basket (product_id, qty, user_id )
+#                     VALUES (?, ?, ?)
 
-    connection.commit()
+#                     ON CONFLICT(product_id) DO UPDATE SET
+#                         qty = CASE
+#                                     WHEN qty = 0 THEN 1
+#                                     ELSE qty + 1
+
+#                                 END
+#                     WHERE user_id = ?;
+#                     """,
+#                 (
+#                     prod_id,
+#                     1,
+#                     uid,
+#                     uid,
+#                 ),
+#             )
+#         elif action == "min":
+#             cursor.execute(
+#                 """
+#                     INSERT INTO  Basket (product_id, qty, user_id )
+#                     VALUES (?, ?, ?)
+#                     ON CONFLICT(product_id) DO UPDATE SET
+#                         qty = CASE
+#                                     WHEN qty = 0 THEN 0
+#                                     ELSE qty - 1
+#                                 END;
+#                     """,
+#                 (
+#                     prod_id,
+#                     1,
+#                     uid,
+#                 ),
+#             )
+
+#     connection.commit()
 
 
 def choice_product(call, prod_id, res_info=None):
@@ -155,6 +160,8 @@ def choice_product(call, prod_id, res_info=None):
     message_id = call.message.message_id
 
     res_info = specific_product(prod_id)
+    print(prod_id, "<<< ==== test")
+
     info_basket = basket(uid, prod_id)
 
     print(info_basket, "<<< -------- КОРЗИНА")
@@ -181,10 +188,92 @@ def choice_product(call, prod_id, res_info=None):
         bot.edit_message_text(
             chat_id=chat_id,
             message_id=message_id,
-            text=f"{res_info[0][1]}\nЦена: {res_info[0][4]} ",
+            text=f"{res_info[0][1]}⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️\nЦена: {res_info[0][4]} ",
             reply_markup=keyboard,
         )
     except Exception as e:
         print(e)
     finally:
         ...
+
+
+def screen_basket(call):
+    uid = call.from_user.id
+    res_basket = basket(uid)
+    chat_id = call.message.chat.id
+    message_id = call.message.message_id
+    keyboard = types.InlineKeyboardMarkup()
+    key = types.InlineKeyboardButton("Купить", callback_data="yes")
+    key1 = types.InlineKeyboardButton(
+        "⬅️⬅️⬅️ Продолжить покупки ⬅️⬅️⬅️ ", callback_data="ba_ck"
+    )
+    keyboard.add(key)
+    keyboard.add(key1)
+    text = "Товары в корзине:"
+    total = 0
+    for i in range(len(res_basket)):
+        total += res_basket[i][1] * res_basket[i][2]
+        text += f"\n{res_basket[i][0]} {res_basket[i][1]}x{res_basket[i][2]}={res_basket[i][1]*res_basket[i][2]}"
+    text += f"\n--------\nИтого: {total}"
+    bot.edit_message_text(
+        chat_id=chat_id,
+        message_id=message_id,
+        text=text,
+        reply_markup=keyboard,
+    )
+
+
+def add2_basket(uid, prod_id, action):
+
+    with sqlite3.connect("shop_2.db") as connection:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """ SELECT * FROM Basket WHERE user_id =? AND product_id=?""",
+            (
+                uid,
+                prod_id,
+            ),
+        )
+        info_basket = cursor.fetchall()
+
+        # print(info_basket)
+        if info_basket == []:
+            if action == "pls":
+                cursor.execute(
+                    """INSERT INTO Basket (product_id,qty,user_id) VALUES (?,?,?)""",
+                    (
+                        prod_id,
+                        1,
+                        uid,
+                    ),
+                )
+            elif action == "min":
+                print("Нечего отнимать")
+        else:
+            qty = info_basket[0][1]
+            qty += 1
+            cursor.execute(
+                """UPDATE Basket SET product_id=?,qty=?,user_id=? WHERE user_id=?""",
+                (
+                    prod_id,
+                    qty,
+                    uid,
+                    uid,
+                ),
+            )
+            print(prod_id, qty, uid)
+        connection.commit()
+        with sqlite3.connect("shop_2.db") as connection:
+            cursor = connection.cursor()
+
+        cursor.execute(
+            """ SELECT * FROM Basket WHERE user_id =? AND product_id=?""",
+            (
+                uid,
+                prod_id,
+            ),
+        )
+        info_basket = cursor.fetchall()
+
+        print(info_basket, "<<< ===== test")

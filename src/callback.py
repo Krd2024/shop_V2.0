@@ -49,32 +49,22 @@ def handle_(call):
     uid = call.from_user.id
     prod_id = call.data[3:]
     action = call.data[:3]
-    add_basket(uid, prod_id, action)
-    # print(call)
+    # add_basket(uid, prod_id, action)
+    add2_basket(uid, prod_id, action)
+
+    print(uid, prod_id, action, "<<< test 1")
+
     choice_product(call, prod_id)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("basket"))
+@bot.callback_query_handler(func=lambda call: call.data.startswith(("basket", "ba_ck")))
 def handle_(call):
     uid = call.from_user.id
-    res_basket = basket(uid)
-    chat_id = call.message.chat.id
-    message_id = call.message.message_id
-    keyboard = types.InlineKeyboardMarkup()
-    key = types.InlineKeyboardButton("Купить", callback_data="yes")
-    keyboard.add(key)
-    text = "Товары в корзине:"
-    total = 0
-    for i in range(len(res_basket)):
-        total += res_basket[i][1] * res_basket[i][2]
-        text += f"\n{res_basket[i][0]} {res_basket[i][1]}✖️{res_basket[i][2]}🟰{res_basket[i][1]*res_basket[i][2]}"
-    text += f"\n--------\nИтого: {total}"
-    bot.edit_message_text(
-        chat_id=chat_id,
-        message_id=message_id,
-        text=text,
-        reply_markup=keyboard,
-    )
+    if call.data.startswith("basket"):
+        screen_basket(call)
+    elif call.data.startswith("ba_ck"):
+        update = 1
+        category(uid, update, call)
 
 
 bot.infinity_polling()
