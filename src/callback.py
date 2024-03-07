@@ -34,6 +34,7 @@ def handle_answer2(call):
     if call.data.startswith("prod_id"):
         res_info = specific_product(call.data[7:])
         print(res_info, "<<< ----- карточка товара")
+        print(call.data[7:])
 
     elif call.data.startswith("bac_k"):
         print(call.data, "<<< ----- call bac_k")
@@ -45,12 +46,15 @@ def handle_answer2(call):
     uid = call.from_user.id
     chat_id = call.message.chat.id
     message_id = call.message.message_id
-    info_basket = basket(uid)
+
+    info_basket = basket(uid, call.data[7:])
 
     print(info_basket, "<<< -------- КОРЗИНА")
 
     if info_basket == []:
         kol_vo = 0
+    else:
+        kol_vo = int(info_basket[0][1])
 
     key1 = types.InlineKeyboardButton(f"➕", callback_data=f"pls{res_info[0][0]}")
     key2 = types.InlineKeyboardButton(f"➖", callback_data=f"min{res_info[0][0]}")

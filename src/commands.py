@@ -12,5 +12,6 @@ bot = TelegramBotWrapper(TOKEN)
 
 @bot.message_handler(commands=["start"])
 def start_message(message):
+    print("Start message")
     uid = message.chat.id
     category(uid)

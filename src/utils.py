@@ -60,10 +60,16 @@ def specific_product(id_tovar):
         return res_info
 
 
-def basket(uid):
+def basket(uid, prod_id):
     with sqlite3.connect("shop_2.db") as connection:
         cursor = connection.cursor()
-        cursor.execute(""" SELECT * FROM Basket WHERE user_id =?""", (uid,))
+        cursor.execute(
+            """ SELECT * FROM Basket WHERE user_id =? AND product_id=?""",
+            (
+                uid,
+                prod_id,
+            ),
+        )
         info_basket = cursor.fetchall()
         return info_basket
 
