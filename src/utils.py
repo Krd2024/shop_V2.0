@@ -81,7 +81,7 @@ def product(res, call):
     keyboard = types.InlineKeyboardMarkup()
     for i in range(len(res)):
         key = types.InlineKeyboardButton(
-            f"{res[i][1]}", callback_data=f"prod_id{res[i][0]}"
+            f"{res[i][1]}", callback_data=f"prod_id{res[i][0]}"  # callback = id product
         )
         keyboard.add(key)
     key_back_1 = types.InlineKeyboardButton("⬅️ Назад", callback_data=f"back_category")
@@ -114,4 +114,43 @@ def add_basket(uid, prod_id, action):
                 uid,
             ),
         )
+
     connection.commit()
+
+
+def choice_product(call, prod_id, res_info=None):
+    print(call)
+    uid = call.from_user.id
+    chat_id = call.message.chat.id
+    message_id = call.message.message_id
+
+    res_info = specific_product(prod_id)
+    info_basket = basket(uid, prod_id)
+
+    print(info_basket, "<<< -------- КОРЗИНА")
+
+    if info_basket == []:
+        kol_vo = 0
+    else:
+        kol_vo = int(info_basket[0][1])
+
+    key1 = types.InlineKeyboardButton(f"➕", callback_data=f"pls{res_info[0][0]}")
+    key2 = types.InlineKeyboardButton(f"➖", callback_data=f"min{res_info[0][0]}")
+
+    key3 = types.InlineKeyboardButton(
+        f"Выбрано {kol_vo}({res_info[0][4] * kol_vo}р) ", callback_data=f" "
+    )
+    key_back_2 = types.InlineKeyboardButton(
+        "⬅️ Назад", callback_data=f"bac_k{res_info[0][5]}"
+    )
+
+    add = [key2, key1]
+    add1 = [key3]
+    keyboard = types.InlineKeyboardMarkup([add, add1, [key_back_2]])
+
+    bot.edit_message_text(
+        chat_id=chat_id,
+        message_id=message_id,
+        text=f"{res_info[0][1]}\nЦена: {res_info[0][4]} ",
+        reply_markup=keyboard,
+    )
