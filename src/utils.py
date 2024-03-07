@@ -75,7 +75,11 @@ def basket(uid, prod_id=None):
             return info_basket
         else:
             cursor.execute(
-                """ SELECT * FROM Basket WHERE user_id =? """,
+                """ SELECT Product.name,qty,price
+                    FROM Basket
+                    join Product on Basket.product_id=Product.id
+                    WHERE Basket.user_id=?
+                """,
                 (uid,),
             )
             info_basket = cursor.fetchall()

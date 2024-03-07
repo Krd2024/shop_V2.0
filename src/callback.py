@@ -57,7 +57,24 @@ def handle_(call):
 @bot.callback_query_handler(func=lambda call: call.data.startswith("basket"))
 def handle_(call):
     uid = call.from_user.id
-    print(basket(uid))
+    res_basket = basket(uid)
+    chat_id = call.message.chat.id
+    message_id = call.message.message_id
+    keyboard = types.InlineKeyboardMarkup()
+    key = types.InlineKeyboardButton("Купить", callback_data="yes")
+    keyboard.add(key)
+    text = "Товары в корзине:"
+    total = 0
+    for i in range(len(res_basket)):
+        total += res_basket[i][1] * res_basket[i][2]
+        text += f"\n{res_basket[i][0]} {res_basket[i][1]}✖️{res_basket[i][2]}🟰{res_basket[i][1]*res_basket[i][2]}"
+    text += f"\n--------\nИтого: {total}"
+    bot.edit_message_text(
+        chat_id=chat_id,
+        message_id=message_id,
+        text=text,
+        reply_markup=keyboard,
+    )
 
 
 bot.infinity_polling()
