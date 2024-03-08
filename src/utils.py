@@ -24,11 +24,14 @@ def category(uid, update=None, call=None):
     key2 = types.InlineKeyboardButton(f"{res[1][1]}", callback_data=f"kateg{res[1][0]}")
     key3 = types.InlineKeyboardButton(f"{res[2][1]}", callback_data=f"kateg{res[2][0]}")
     key4 = types.InlineKeyboardButton(f"{res[3][1]}", callback_data=f"kateg{res[3][0]}")
+    get_orders = types.InlineKeyboardButton(
+        f"Посмотреть покупки", callback_data=f"get_orders"
+    )
     key_basket = types.InlineKeyboardButton("Корзина", callback_data=f"basket")
 
     add = [key1, key2]
     add1 = [key3, key4]
-    keyboard = types.InlineKeyboardMarkup([add, add1, [key_basket]])
+    keyboard = types.InlineKeyboardMarkup([add, add1, [get_orders], [key_basket]])
     if update is None:
         bot.send_message(uid, text="Выберите категорию товаров:", reply_markup=keyboard)
     else:
@@ -152,28 +155,34 @@ def choice_product(call, prod_id, res_info=None):
         ...
 
 
-def screen_basket(call):
+def screen_basket(call, end=None):
     uid = call.from_user.id
     res_basket = basket(uid)
     chat_id = call.message.chat.id
     message_id = call.message.message_id
     keyboard = types.InlineKeyboardMarkup()
-    key = types.InlineKeyboardButton("Купить", callback_data="yes")
-    key1 = types.InlineKeyboardButton(
-        "⬅️⬅️⬅️ Продолжить покупки ⬅️⬅️⬅️ ", callback_data="ba_ck"
-    )
+    if end is not None and end == "Куплено ✔️":
+        text = end
+    else:
+        text = f"Купить"
+    if end is not None and end == "Корзина пустая":
+        text2 = end
+    else:
+        text2 = f"Товары в корзине:"
+    key = types.InlineKeyboardButton(text, callback_data="yes")
+    key1 = types.InlineKeyboardButton("⬅️⬅️⬅️⬅️Главное меню⬅️⬅️⬅️⬅️⬅️", callback_data="ba_ck")
     keyboard.add(key)
     keyboard.add(key1)
-    text = "Товары в корзине:"
+
     total = 0
     for i in range(len(res_basket)):
         total += res_basket[i][1] * res_basket[i][2]
-        text += f"\n{res_basket[i][0]} {res_basket[i][1]}x{res_basket[i][2]}={res_basket[i][1]*res_basket[i][2]}"
-    text += f"\n--------\nИтого: {total}"
+        text2 += f"\n{res_basket[i][0]} {res_basket[i][1]}x{res_basket[i][2]}={res_basket[i][1]*res_basket[i][2]}"
+    text2 += f"\n--------\nИтого: {total}"
     bot.edit_message_text(
         chat_id=chat_id,
         message_id=message_id,
-        text=text,
+        text=text2,
         reply_markup=keyboard,
     )
 
@@ -224,7 +233,7 @@ def add2_basket(uid, prod_id, action):
         connection.commit()
 
 
-def order_and_ordeItem(uid):
+def order_and_ordeItem(uid, call):
 
     data_time = datetime.datetime.now()
     date = data_time.strftime("%m.%d.%Y")
@@ -237,23 +246,45 @@ def order_and_ordeItem(uid):
             (uid,),
         )
         info_basket = cursor.fetchall()
+        print(info_basket)
+        if info_basket != []:
+            cursor.execute(
+                """INSERT INTO Orders (user_id,date,time) VALUES (?,?,?)""",
+                (uid, date, time),
+            )
+            connection.commit()
+            cursor.execute(
+                """ SELECT id FROM Orders WHERE user_id =?""",
+                (uid,),
+            )
+        else:
+            end = f"Корзина пустая"
 
-        cursor.execute(
-            """INSERT INTO Orders (user_id,date) VALUES (?,?)""",
-            (
-                uid,
-                time,
-            ),
-        )
-        connection.commit()
-        cursor.execute(
-            """ SELECT id FROM Orders WHERE user_id =?""",
-            (uid,),
-        )
+            screen_basket(call, end)
+            return
         info_order = cursor.fetchall()[-1][0]
         for i in range(len(info_basket)):
             cursor.execute(
                 """INSERT INTO Order_item (order_id,produkt_id,count) VALUES (?,?,?)""",
                 (info_order, info_basket[i][0], info_basket[i][1]),
             )
+
         connection.commit()
+        cursor.execute(""" DELETE FROM Basket WHERE user_id =?""", (uid,))
+        connection.commit()
+        end = f"Куплено ✔️"
+        screen_basket(call, end)  # вывод на экран пустой корзины
+
+
+def get_orders(uid):
+    with sqlite3.connect("shop_2.db") as connection:
+        cursor = connection.cursor()
+        cursor.execute(
+            """SELECT  DISTINCT Product.name,count,Orders.user_id,date FROM Order_item
+                JOIN Product on Order_item.produkt_id = Product.id
+                JOIN Orders on Order_item.order_id = Orders.id
+                WHERE Orders.user_id = ?""",
+            (uid,),
+        )
+        res_get_orders = cursor.fetchall()
+        print(res_get_orders)
