@@ -69,7 +69,7 @@ def handle_(call):
 
 
 @bot.callback_query_handler(
-    func=lambda call: call.data.startswith(("yes", "get_orders"))
+    func=lambda call: call.data.startswith(("yes", "get_orders", "main"))
 )
 def handle_(call):
     """[1] - Перевод из корзины в куплено. [2] - Показ сделанных покупок"""
@@ -77,7 +77,10 @@ def handle_(call):
     if call.data.startswith("yes"):
         order_and_ordeItem(uid, call)
     elif call.data.startswith("get_orders"):
-        get_orders(uid)
+        get_orders(uid, call)
+    elif call.data.startswith("main"):
+        update = 1
+        category(uid, update, call)
 
 
 bot.infinity_polling()

@@ -276,15 +276,32 @@ def order_and_ordeItem(uid, call):
         screen_basket(call, end)  # вывод на экран пустой корзины
 
 
-def get_orders(uid):
+def get_orders(uid, call):
+    uid = call.from_user.id
+    res_basket = basket(uid)
+    chat_id = call.message.chat.id
+    message_id = call.message.message_id
     with sqlite3.connect("shop_2.db") as connection:
         cursor = connection.cursor()
         cursor.execute(
-            """SELECT  DISTINCT Product.name,count,Orders.user_id,date FROM Order_item
+            """SELECT  DISTINCT Product.name,count,Orders.user_id,date,time FROM Order_item
                 JOIN Product on Order_item.produkt_id = Product.id
                 JOIN Orders on Order_item.order_id = Orders.id
                 WHERE Orders.user_id = ?""",
             (uid,),
         )
         res_get_orders = cursor.fetchall()
-        print(res_get_orders)
+    keyboard = types.InlineKeyboardMarkup()
+    key = types.InlineKeyboardButton(f"Вернуться в главное меню", callback_data="main")
+    keyboard.add(key)
+    text3 = f"⬇️⬇️⬇️⬇️⬇️ Ваши покупки: ⬇️⬇️⬇️⬇️⬇️"
+    for i in range(len(res_get_orders)):
+        text3 += f"\n{res_get_orders[i][0]}\nКоличество: {res_get_orders[i][1]}\nДата: {res_get_orders[i][3]}\nВремя: {res_get_orders[i][4]}\n--------------------------"
+
+    bot.edit_message_text(
+        chat_id=chat_id,
+        message_id=message_id,
+        text=text3,
+        reply_markup=keyboard,
+    )
+    print(res_get_orders)
