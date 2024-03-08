@@ -239,7 +239,21 @@ def order_and_ordeItem(uid):
         info_basket = cursor.fetchall()
 
         cursor.execute(
-            """INSERT INTO Order (id,uid,date) VALUES (?,?,?)""",
-            (order_id, uid, time),
+            """INSERT INTO Orders (user_id,date) VALUES (?,?)""",
+            (
+                uid,
+                time,
+            ),
         )
-        print(info_basket)
+        connection.commit()
+        cursor.execute(
+            """ SELECT id FROM Orders WHERE user_id =?""",
+            (uid,),
+        )
+        info_order = cursor.fetchall()[-1][0]
+        for i in range(len(info_basket)):
+            cursor.execute(
+                """INSERT INTO Order_item (order_id,produkt_id,count) VALUES (?,?,?)""",
+                (info_order, info_basket[i][0], info_basket[i][1]),
+            )
+        connection.commit()
