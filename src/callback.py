@@ -67,4 +67,10 @@ def handle_(call):
         category(uid, update, call)
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith(("yes")))
+def handle_(call):
+    uid = call.from_user.id
+    order_and_ordeItem(uid)
+
+
 bot.infinity_polling()

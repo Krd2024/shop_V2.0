@@ -1,7 +1,9 @@
+import datetime
 import sqlite3
 import telebot
 from telebot import types
 from src.wrapper_bot import TelegramBotWrapper
+import time
 
 from decouple import config
 
@@ -107,53 +109,6 @@ def product(res, call):
     )
 
 
-# def add_basket(uid, prod_id, action):
-#     print(uid, prod_id, action, "<<< test 2")
-
-#     with sqlite3.connect("shop_2.db") as connection:
-#         cursor = connection.cursor()
-#         if action == "pls":
-#             cursor.execute(
-#                 """
-#                     INSERT INTO  Basket (product_id, qty, user_id )
-#                     VALUES (?, ?, ?)
-
-#                     ON CONFLICT(product_id) DO UPDATE SET
-#                         qty = CASE
-#                                     WHEN qty = 0 THEN 1
-#                                     ELSE qty + 1
-
-#                                 END
-#                     WHERE user_id = ?;
-#                     """,
-#                 (
-#                     prod_id,
-#                     1,
-#                     uid,
-#                     uid,
-#                 ),
-#             )
-#         elif action == "min":
-#             cursor.execute(
-#                 """
-#                     INSERT INTO  Basket (product_id, qty, user_id )
-#                     VALUES (?, ?, ?)
-#                     ON CONFLICT(product_id) DO UPDATE SET
-#                         qty = CASE
-#                                     WHEN qty = 0 THEN 0
-#                                     ELSE qty - 1
-#                                 END;
-#                     """,
-#                 (
-#                     prod_id,
-#                     1,
-#                     uid,
-#                 ),
-#             )
-
-#     connection.commit()
-
-
 def choice_product(call, prod_id, res_info=None):
     uid = call.from_user.id
     chat_id = call.message.chat.id
@@ -252,28 +207,39 @@ def add2_basket(uid, prod_id, action):
                 print("Нечего отнимать")
         else:
             qty = info_basket[0][1]
-            qty += 1
+            if action == "pls":
+                qty += 1
+            else:
+                qty -= 1
             cursor.execute(
-                """UPDATE Basket SET product_id=?,qty=?,user_id=? WHERE user_id=?""",
+                """UPDATE Basket SET product_id=?,qty=?,user_id=? WHERE user_id=? AND product_id=? """,
                 (
                     prod_id,
                     qty,
                     uid,
                     uid,
+                    prod_id,
                 ),
             )
-            print(prod_id, qty, uid)
         connection.commit()
-        with sqlite3.connect("shop_2.db") as connection:
-            cursor = connection.cursor()
 
+
+def order_and_ordeItem(uid):
+
+    data_time = datetime.datetime.now()
+    date = data_time.strftime("%m.%d.%Y")
+    time = data_time.strftime("%H:%M")
+
+    with sqlite3.connect("shop_2.db") as connection:
+        cursor = connection.cursor()
         cursor.execute(
-            """ SELECT * FROM Basket WHERE user_id =? AND product_id=?""",
-            (
-                uid,
-                prod_id,
-            ),
+            """ SELECT * FROM Basket WHERE user_id =?""",
+            (uid,),
         )
         info_basket = cursor.fetchall()
 
-        print(info_basket, "<<< ===== test")
+        cursor.execute(
+            """INSERT INTO Order (id,uid,date) VALUES (?,?,?)""",
+            (order_id, uid, time),
+        )
+        print(info_basket)
