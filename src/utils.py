@@ -259,26 +259,25 @@ def order_and_ordeItem(uid, call):
             )
         else:
             end = f"Корзина пустая"
-
             screen_basket(call, end)
             return
-        info_order = cursor.fetchall()[-1][0]
-        for i in range(len(info_basket)):
-            cursor.execute(
-                """INSERT INTO Order_item (order_id,produkt_id,count) VALUES (?,?,?)""",
-                (info_order, info_basket[i][0], info_basket[i][1]),
-            )
+    info_order = cursor.fetchall()[-1][0]
+    for i in range(len(info_basket)):
+        cursor.execute(
+            """INSERT INTO Order_item (order_id,produkt_id,count) VALUES (?,?,?)""",
+            (info_order, info_basket[i][0], info_basket[i][1]),
+        )
 
-        connection.commit()
-        cursor.execute(""" DELETE FROM Basket WHERE user_id =?""", (uid,))
-        connection.commit()
-        end = f"Куплено ✔️"
-        screen_basket(call, end)  # вывод на экран пустой корзины
+    connection.commit()
+    cursor.execute(""" DELETE FROM Basket WHERE user_id =?""", (uid,))
+    connection.commit()
+    end = f"Куплено ✔️"
+    screen_basket(call, end)  # вывод на экран пустой корзины
 
 
 def get_orders(uid, call):
     uid = call.from_user.id
-    res_basket = basket(uid)
+    # res_basket = basket(uid)
     chat_id = call.message.chat.id
     message_id = call.message.message_id
     with sqlite3.connect("shop_2.db") as connection:
@@ -305,3 +304,9 @@ def get_orders(uid, call):
         reply_markup=keyboard,
     )
     print(res_get_orders)
+
+    # cursor.execute(
+    #     """INSERT INTO Order (id,uid,date) VALUES (?,?,?)""",
+    #     (order_id, uid, time),
+    # )
+    # print(info_basket)

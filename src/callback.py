@@ -1,6 +1,7 @@
 from telebot import types
 from src.wrapper_bot import TelegramBotWrapper
 from src.utils import *
+
 from decouple import config
 
 TOKEN = config("TOKEN", cast=str, default="пусто")
@@ -45,8 +46,6 @@ def handle_answer2(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith(("pls", "min")))
 def handle_(call):
-    """Вызывает функцию добавления и удаления товара за корцины"""
-
     uid = call.from_user.id
     prod_id = call.data[3:]
     action = call.data[:3]
