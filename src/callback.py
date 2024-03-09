@@ -73,10 +73,13 @@ def handle_(call):
 def handle_(call):
     """[1] - Перевод из корзины в куплено. [2] - Показ сделанных покупок"""
     uid = call.from_user.id
+
     if call.data.startswith("yes"):
         order_and_ordeItem(uid, call)
+
     elif call.data.startswith("get_orders"):
         get_orders(uid, call)
+
     elif call.data.startswith("main"):
         update = 1
         category(uid, update, call)

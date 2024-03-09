@@ -40,7 +40,7 @@ def category(uid, update=None, call=None):
         bot.edit_message_text(
             chat_id=chat_id,
             message_id=message_id,
-            text="Выберите категорию товаров: ⬇️⬇️⬇️",
+            text="Выберите категорию товаров:\n⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️",
             reply_markup=keyboard,
         )
 
@@ -58,6 +58,8 @@ def tovar(cat_num):
 
 
 def specific_product(id_tovar):
+    """Возвращает инф.товара по id"""
+
     with sqlite3.connect("shop_2.db") as connection:
         cursor = connection.cursor()
         cursor.execute(""" SELECT * FROM Product WHERE id =?""", (id_tovar,))
@@ -107,7 +109,7 @@ def product(res, call):
     bot.edit_message_text(
         chat_id=chat_id,
         message_id=message_id,
-        text="Выберите товар: ⬇️⬇️⬇️⬇️⬇️⬇️⬇️",
+        text="Выберите товар:\n⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️",
         reply_markup=keyboard,
     )
 
@@ -117,7 +119,9 @@ def choice_product(call, prod_id, res_info=None):
     chat_id = call.message.chat.id
     message_id = call.message.message_id
 
-    res_info = specific_product(prod_id)
+    res_info = specific_product(prod_id)  # Выбор конретного товара
+    balance = res_info[0][3]  # остаток товара
+
     print(prod_id, "<<< ==== test")
 
     info_basket = basket(uid, prod_id)
@@ -146,7 +150,7 @@ def choice_product(call, prod_id, res_info=None):
         bot.edit_message_text(
             chat_id=chat_id,
             message_id=message_id,
-            text=f"{res_info[0][1]}⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️\nЦена: {res_info[0][4]} ",
+            text=f"{res_info[0][1]}\nЦена: {res_info[0][4]}\nОстаток: {balance}\n⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️",
             reply_markup=keyboard,
         )
     except Exception as e:
@@ -156,6 +160,8 @@ def choice_product(call, prod_id, res_info=None):
 
 
 def screen_basket(call, end=None):
+    """Показать содержимое корзины при запросе"""
+
     uid = call.from_user.id
     res_basket = basket(uid)
     chat_id = call.message.chat.id
@@ -188,6 +194,7 @@ def screen_basket(call, end=None):
 
 
 def add2_basket(uid, prod_id, action):
+    """Добавление товара в корзину"""
 
     with sqlite3.connect("shop_2.db") as connection:
         cursor = connection.cursor()
@@ -234,6 +241,7 @@ def add2_basket(uid, prod_id, action):
 
 
 def order_and_ordeItem(uid, call):
+    """Занесение заказа в таблицу"""
 
     data_time = datetime.datetime.now()
     date = data_time.strftime("%m.%d.%Y")
@@ -261,21 +269,40 @@ def order_and_ordeItem(uid, call):
             end = f"Корзина пустая"
             screen_basket(call, end)
             return
-    info_order = cursor.fetchall()[-1][0]
+    info_order = cursor.fetchall()[-1][0]  # получить id order
+
     for i in range(len(info_basket)):
         cursor.execute(
             """INSERT INTO Order_item (order_id,produkt_id,count) VALUES (?,?,?)""",
             (info_order, info_basket[i][0], info_basket[i][1]),
         )
 
+        res_info = specific_product(info_basket[i][0])
+        qty = res_info[0][3] - info_basket[i][1]  # вычитание купленного из остатка
+        print(qty, uid, info_basket)
+        cursor.execute(
+            """UPDATE Product SET balance=? WHERE id=? """,
+            (
+                qty,
+                info_basket[i][0],
+            ),
+        )
+    connection.commit()
+    # =================================================================
     connection.commit()
     cursor.execute(""" DELETE FROM Basket WHERE user_id =?""", (uid,))
     connection.commit()
     end = f"Куплено ✔️"
+    # =================================================================
+    # Выбор конретного товара
+    # остаток товара
+
     screen_basket(call, end)  # вывод на экран пустой корзины
 
 
 def get_orders(uid, call):
+    """Показывае совершённые покупки"""
+
     uid = call.from_user.id
     # res_basket = basket(uid)
     chat_id = call.message.chat.id
@@ -293,7 +320,7 @@ def get_orders(uid, call):
     keyboard = types.InlineKeyboardMarkup()
     key = types.InlineKeyboardButton(f"Вернуться в главное меню", callback_data="main")
     keyboard.add(key)
-    text3 = f"⬇️⬇️⬇️⬇️⬇️ Ваши покупки: ⬇️⬇️⬇️⬇️⬇️"
+    text3 = f"Ваши покупки:\n⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️"
     for i in range(len(res_get_orders)):
         text3 += f"\n{res_get_orders[i][0]}\nКоличество: {res_get_orders[i][1]}\nДата: {res_get_orders[i][3]}\nВремя: {res_get_orders[i][4]}\n--------------------------"
 
@@ -304,9 +331,3 @@ def get_orders(uid, call):
         reply_markup=keyboard,
     )
     print(res_get_orders)
-
-    # cursor.execute(
-    #     """INSERT INTO Order (id,uid,date) VALUES (?,?,?)""",
-    #     (order_id, uid, time),
-    # )
-    # print(info_basket)
