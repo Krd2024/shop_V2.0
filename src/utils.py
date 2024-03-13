@@ -210,7 +210,7 @@ def screen_basket(call, end=None):
     else:
         text2 = f"Товары в корзине:"
     key = types.InlineKeyboardButton(text, callback_data="yes")
-    key1 = types.InlineKeyboardButton("⬅️⬅️⬅️⬅️Главное меню⬅️⬅️⬅️⬅️⬅️", callback_data="ba_ck")
+    key1 = types.InlineKeyboardButton("⬅️⬅️⬅️⬅️Главное меню⬅️⬅️⬅️⬅️", callback_data="ba_ck")
     keyboard.add(key)
     keyboard.add(key1)
 
