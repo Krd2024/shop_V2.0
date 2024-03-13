@@ -2,6 +2,7 @@ import datetime
 import sqlite3
 import telebot
 from telebot import types
+from telegram import InputMediaPhoto, Update
 from src.wrapper_bot import TelegramBotWrapper
 import time
 
@@ -114,19 +115,48 @@ def product(res, call):
     )
 
 
+def get_img(id_img):
+    with sqlite3.connect("shop_2.db") as connection:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """ SELECT file_path FROM Img WHERE id =?""",
+            (id_img,),
+        )
+        info_basket = cursor.fetchone()[0]
+        return info_basket
+
+
 def choice_product(call, prod_id, res_info=None):
     uid = call.from_user.id
     chat_id = call.message.chat.id
     message_id = call.message.message_id
-
+    # ----------------------------------------------------------------
     res_info = specific_product(prod_id)  # Выбор конретного товара
     balance = res_info[0][3]  # остаток товара
+    # ---------------------- картинка---------------------------------
+    {res_info[0][1]}  # наиминование продукта
+    prod_id  # id продукта
+    img_id = res_info[0][2]  # id img
+    path_img = get_img(img_id)
 
+    file_img = open(path_img, "rb")
+
+    # ----------------------------------------------------------------
     print(prod_id, "<<< ==== test")
-
     info_basket = basket(uid, prod_id)
-
     print(info_basket, "<<< -------- КОРЗИНА")
+
+    text = (
+        f"{res_info[0][1]}\nЦена: {res_info[0][4]}\nОстаток: {balance}\n⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️",
+    )
+    # bot.edit_message_media(uid, file_img)
+    # print(call.inline_message_id)
+    # bot.edit_message_media(
+    #     media, chat_id=None, message_id=None, inline_message_id=None, reply_markup=None
+    # )
+
+    # bot.send_photo(uid, file_img, caption=text)
 
     if info_basket == []:
         kol_vo = 0
@@ -146,6 +176,10 @@ def choice_product(call, prod_id, res_info=None):
     add = [key2, key1]
     add1 = [key3]
     keyboard = types.InlineKeyboardMarkup([add, add1, [key_back_2]])
+    # ----------------------------------------------------------------
+    with open(path_img, "rb") as photo_file:
+        photo_media = photo_file.read()
+    # --------------------------------------------------------------
     try:
         bot.edit_message_text(
             chat_id=chat_id,
