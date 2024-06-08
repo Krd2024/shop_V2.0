@@ -14,7 +14,7 @@ bot = TelegramBotWrapper(TOKEN)
 
 
 def category(uid, update=None, call=None):
-    """Выаодит список категорий в при запуске , if update is None: обновляет экран"""
+    """Выводит список категорий в при запуске , if update is None: обновляет экран"""
 
     with sqlite3.connect("shop_2.db") as connection:
         cursor = connection.cursor()
